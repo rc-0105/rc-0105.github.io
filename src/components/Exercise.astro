@@ -1,0 +1,160 @@
+---
+interface Props {
+  id?: string;
+  title: string;
+  date?: string;
+  context?: string;
+  language?: string;
+  code?: string;
+  reflection?: string;
+  scriptUrl?: string;
+}
+const { id, title, date, context, language = 'sql', code, reflection, scriptUrl } = Astro.props;
+---
+
+<div class="exercise-card" id={id}>
+  <div class="exercise-header">
+    <h4 class="exercise-title">{title}</h4>
+    {date && <span class="exercise-date">{date}</span>}
+  </div>
+
+  {context && (
+    <div class="exercise-context">
+      <p>{context}</p>
+    </div>
+  )}
+
+  {code && (
+    <div class="exercise-code-block">
+      <div class="code-label">{language.toUpperCase()}</div>
+      <pre><code>{code.trim()}</code></pre>
+    </div>
+  )}
+
+  {reflection && (
+    <div class="exercise-reflection">
+      <p class="reflection-label">Reflexión</p>
+      <p class="reflection-text">{reflection}</p>
+    </div>
+  )}
+
+  {scriptUrl && (
+    <div class="exercise-download">
+      <a href={scriptUrl} download class="download-btn">Descargar script</a>
+    </div>
+  )}
+</div>
+
+<style>
+  .exercise-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .exercise-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .exercise-title {
+    color: #fff;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .exercise-date {
+    color: #666;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .exercise-context p {
+    color: #a8a8a8;
+    margin: 0;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .exercise-code-block {
+    position: relative;
+  }
+
+  .code-label {
+    color: #7ec5ff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  pre {
+    background-color: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0;
+    overflow-x: auto;
+  }
+
+  pre code {
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .exercise-reflection {
+    border-left: 3px solid #7ec5ff;
+    padding-left: 16px;
+  }
+
+  .reflection-label {
+    color: #7ec5ff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+
+  .reflection-text {
+    color: #a8a8a8;
+    margin: 0;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .exercise-download {
+    padding-top: 4px;
+  }
+
+  .download-btn {
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.08);
+    border: 1px solid rgba(126, 197, 255, 0.2);
+    border-radius: 6px;
+    padding: 8px 14px;
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: background-color 0.12s;
+    display: inline-block;
+  }
+
+  .download-btn:hover {
+    background-color: rgba(126, 197, 255, 0.15);
+  }
+</style>

@@ -1,0 +1,100 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import UnitCard from '../../components/UnitCard.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Back</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <div>
+              <h1>Bases de Datos II</h1>
+              <p class="bd2-subtitle">Portafolio académico — semestre 2026-1</p>
+              <p>
+                Este espacio registra el proceso de aprendizaje durante el semestre: ejercicios
+                depurados, retos planteados en clase, investigaciones y el proyecto integrador
+                SpotiClone. El objetivo es mostrar no solo el código, sino el razonamiento detrás
+                de cada solución y lo que quedó como aprendizaje real.
+              </p>
+            </div>
+
+            <section class="content-container">
+              <h3>Unidades temáticas</h3>
+              <div class="units-list">
+                <UnitCard
+                  number="01"
+                  title="SQL Avanzado y Transacciones (ACID)"
+                  description="Consultas complejas con joins múltiples, CTEs encadenadas, SAVEPOINT/ROLLBACK, control de concurrencia sobre el esquema HR de Oracle."
+                  topics={["SQL", "CTE", "ACID", "Oracle HR", "Transacciones"]}
+                  status="completo"
+                  href="/bases-de-datos-ii/01-sql-avanzado"
+                />
+                <UnitCard
+                  number="02"
+                  title="PL/SQL"
+                  description="Procedimientos, funciones, paquetes, triggers, manejo de excepciones y auditoría básica."
+                  topics={["PL/SQL", "Triggers", "Paquetes", "Excepciones", "Auditoría"]}
+                  status="completo"
+                  href="/bases-de-datos-ii/02-plsql"
+                />
+                <UnitCard
+                  number="03"
+                  title="MongoDB y NoSQL Documental"
+                  description="Modelado de documentos, consultas MQL, pipelines de agregación e índices básicos."
+                  topics={["MongoDB", "MQL", "Aggregation", "Índices", "NoSQL"]}
+                  status="completo"
+                  href="/bases-de-datos-ii/03-mongodb"
+                />
+                <UnitCard
+                  number="04"
+                  title="Distribuidas, HA/Backups y ETL/ELT"
+                  description="Conceptos de bases de datos distribuidas, alta disponibilidad, estrategias de respaldo e integración de datos."
+                  topics={["Distribuidas", "HA", "Backups", "ETL", "ELT", "Replicación"]}
+                  status="esquema"
+                  href="/bases-de-datos-ii/04-distribuidas"
+                />
+                <UnitCard
+                  number="05"
+                  title="Proyecto integrador — SpotiClone"
+                  description="Sistema políglota con Astro, Spring Boot, PostgreSQL y MongoDB. Equipo con Anthony Vega y Samuel Mesa."
+                  topics={["Astro", "Spring Boot", "PostgreSQL", "MongoDB", "Políglota"]}
+                  status="completo"
+                  href="/bases-de-datos-ii/05-proyecto"
+                />
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .bd2-subtitle {
+    color: #666;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    margin-top: -12px;
+    margin-bottom: 16px;
+  }
+
+  .units-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+</style>

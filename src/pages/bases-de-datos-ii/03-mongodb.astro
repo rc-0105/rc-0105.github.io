@@ -1,0 +1,168 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Exercise from '../../components/Exercise.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="MongoDB | Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/bases-de-datos-ii" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Bases de Datos II</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <h1>03 · MongoDB y NoSQL Documental</h1>
+
+            <section class="content-container">
+              <h3>Contexto</h3>
+              <p>
+                Esta unidad fue el primer contacto serio con una base de datos documental.
+                Se trabajó modelado de colecciones, consultas MQL básicas y avanzadas,
+                pipelines de agregación y diseño de índices. El contexto de práctica fue
+                SpotiClone, el proyecto integrador del semestre.
+              </p>
+            </section>
+
+            <section class="content-container">
+              <h3>Taller MQL</h3>
+              <div class="exercises-list">
+                <Exercise
+                  title="Modelado, consultas y agregaciones MongoDB"
+                  date="2026-03"
+                  language="javascript"
+                  context="Diseño de colecciones para SpotiClone, queries con $match, $group, $lookup, índices simples y compuestos. Calificación: 5/5."
+                  code={`// Top artistas por reproducciones — pipeline de agregación
+db.reproducciones.aggregate([
+  {
+    $match: {
+      fecha: { $gte: ISODate("2026-01-01") }
+    }
+  },
+  {
+    $group: {
+      _id: "$artista_id",
+      total_reproducciones: { $sum: 1 },
+      canciones_unicas: { $addToSet: "$cancion_id" }
+    }
+  },
+  {
+    $lookup: {
+      from: "artistas",
+      localField: "_id",
+      foreignField: "_id",
+      as: "artista_info"
+    }
+  },
+  {
+    $unwind: "$artista_info"
+  },
+  {
+    $project: {
+      nombre: "$artista_info.nombre",
+      total_reproducciones: 1,
+      canciones_distintas: { $size: "$canciones_unicas" }
+    }
+  },
+  {
+    $sort: { total_reproducciones: -1 }
+  },
+  {
+    $limit: 10
+  }
+])`}
+                  reflection="El cambio de mentalidad relacional a documental fue más fuerte de lo que esperaba. Aprendí que $lookup no es JOIN — funciona, pero el modelado bien hecho lo evita. Si necesito $lookup en cada query, probablemente el esquema está mal modelado."
+                  scriptUrl="/bd2/scripts/mongo/taller-mql.js"
+                />
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Taller MQL — Video explicativo</h3>
+              <div class="info-block">
+                <p>
+                  Como parte del taller se grabó un video explicando el modelado de las
+                  colecciones de SpotiClone y las queries desarrolladas: criterios de diseño
+                  de documentos embebidos vs. referencias, justificación del esquema elegido
+                  y demostración de los pipelines en MongoDB Compass.
+                </p>
+                <p class="score-inline">
+                  Calificación: <span class="score-highlight">5 / 5</span>
+                </p>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Índices</h3>
+              <div class="info-block">
+                <p>
+                  Los índices en MongoDB aceleran las lecturas pero tienen costo en escritura:
+                  cada INSERT o UPDATE debe actualizar también el árbol B del índice. La regla
+                  práctica es crear índices solo sobre los campos que aparecen en los filtros
+                  frecuentes (<code>$match</code>, <code>find</code>) y en los sort de queries
+                  críticas.
+                </p>
+                <p>
+                  Para SpotiClone creamos índice compuesto sobre <code>{"{ artista_id: 1, fecha: -1 }"}</code>
+                  en la colección <code>reproducciones</code>, que es la más consultada en los
+                  reportes de top artistas por período.
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .info-block {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2e2e2e;
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .info-block p {
+    font-size: 14px;
+    line-height: 22px;
+    margin: 0 0 12px;
+  }
+
+  .info-block p:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-block code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .score-inline {
+    color: #a8a8a8;
+    font-size: 13px;
+  }
+
+  .score-highlight {
+    color: #6ee7b7;
+    font-weight: 600;
+  }
+</style>

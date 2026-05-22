@@ -1,0 +1,240 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="SpotiClone | Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/bases-de-datos-ii" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Bases de Datos II</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <h1>05 · SpotiClone</h1>
+            <p class="project-subtitle">Proyecto integrador — Bases de Datos II, semestre 2026-1</p>
+
+            <section class="content-container">
+              <div class="project-meta-card">
+                <div class="meta-row">
+                  <span class="meta-label">Equipo</span>
+                  <span class="meta-value">Anthony Vega · Samuel Mesa · Ricardo Carrero</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Stack</span>
+                  <div class="chips-container" style="margin-top: 0;">
+                    <span class="single-chip small-chip">Astro</span>
+                    <span class="single-chip small-chip">Spring Boot</span>
+                    <span class="single-chip small-chip">PostgreSQL</span>
+                    <span class="single-chip small-chip">MongoDB</span>
+                    <span class="single-chip small-chip">Java</span>
+                  </div>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Arquitectura</span>
+                  <span class="meta-value">Políglota — motor relacional + documental</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Modelado relacional</h3>
+              <div class="section-block">
+                <p>
+                  PostgreSQL gestiona los datos estructurados del sistema: usuarios, artistas,
+                  canciones, álbumes, suscripciones y transacciones. El diseño siguió un proceso
+                  de normalización hasta 3FN, con diagramas E-R previos al DDL.
+                </p>
+                <p>
+                  El DDL incluye constraints de integridad referencial, claves foráneas con
+                  acciones ON DELETE, índices sobre campos de búsqueda frecuente y seeds de datos
+                  representativos para pruebas.
+                </p>
+                <div class="artifact-row">
+                  <span class="artifact-chip">Diagrama E-R</span>
+                  <span class="artifact-chip">DDL — creación de tablas</span>
+                  <span class="artifact-chip">DML — inserts de prueba</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Modelado documental</h3>
+              <div class="section-block">
+                <p>
+                  MongoDB maneja los datos que se consultan con patrones de acceso denormalizados
+                  y donde la flexibilidad de esquema tiene valor: reproduciones, historial de
+                  escucha, playlists y metadatos de sesión.
+                </p>
+                <p>
+                  Las colecciones principales son <code>reproducciones</code>, <code>playlists</code>
+                  y <code>sesiones_usuario</code>. Los documentos embeben información que se consulta
+                  junta para evitar $lookup en queries de alta frecuencia.
+                </p>
+                <div class="artifact-row">
+                  <span class="artifact-chip">Diseño de colecciones</span>
+                  <span class="artifact-chip">Pipelines de agregación</span>
+                  <span class="artifact-chip">Estrategia de índices</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Integración entre motores</h3>
+              <div class="section-block">
+                <p>
+                  El backend en Spring Boot actúa como orquestador: gestiona transacciones en
+                  PostgreSQL via JPA/Hibernate y escribe eventos en MongoDB via MongoTemplate.
+                  La capa de servicio decide qué motor consultar según el tipo de operación —
+                  transaccional vs. analítica/de lectura masiva.
+                </p>
+                <p>
+                  El frontend en Astro consume la API REST del backend. No hay comunicación
+                  directa entre el cliente y las bases de datos.
+                </p>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Documentación</h3>
+              <div class="section-block">
+                <p>
+                  Se produjo un documento Word con la documentación completa del proyecto:
+                  diagramas E-R, justificación del diseño relacional y documental, DDL comentado,
+                  descripción de los pipelines de agregación, manual de instalación y una
+                  sección de reflexión sobre el aprendizaje políglota del equipo.
+                </p>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Reflexión</h3>
+              <div class="reflection-block">
+                <p>
+                  SpotiClone fue el primer proyecto donde usé dos motores de base de datos en
+                  producción al mismo tiempo. La decisión de qué va en PostgreSQL y qué en
+                  MongoDB no es obvia — tuvimos debates reales sobre si las playlists debían
+                  ser relacionales o documentales. Terminamos eligiendo documental porque el
+                  esquema de una playlist cambia por usuario y la consistencia eventual era
+                  aceptable.
+                </p>
+                <p>
+                  Lo que más aprendí: la arquitectura políglota no es "usar dos bases de datos".
+                  Es entender los tradeoffs de cada motor y asignar la responsabilidad correcta.
+                  Si todo termina en PostgreSQL, no necesitabas MongoDB. Si todo termina en
+                  MongoDB, probablemente hay relaciones que estás ignorando.
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .project-subtitle {
+    color: #666;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    margin-top: -12px;
+    margin-bottom: 0;
+  }
+
+  .project-meta-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .meta-label {
+    color: #666;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 90px;
+    padding-top: 3px;
+  }
+
+  .meta-value {
+    color: #a8a8a8;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .section-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .section-block p {
+    font-size: 14px;
+    line-height: 22px;
+    margin: 0 0 12px;
+  }
+
+  .section-block code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .artifact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .artifact-chip {
+    color: #a8a8a8;
+    background-color: rgba(168, 168, 168, 0.06);
+    border: 1px solid #2e2e2e;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+  }
+
+  .reflection-block {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2e2e2e;
+    border-left: 3px solid #7ec5ff;
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .reflection-block p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .reflection-block p:last-child {
+    margin-bottom: 0;
+  }
+</style>

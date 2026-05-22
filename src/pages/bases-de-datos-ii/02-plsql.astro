@@ -1,0 +1,254 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Exercise from '../../components/Exercise.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="PL/SQL | Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/bases-de-datos-ii" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Bases de Datos II</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <h1>02 · PL/SQL</h1>
+
+            <section class="content-container">
+              <h3>Contexto</h3>
+              <p>
+                Esta unidad cubrió PL/SQL desde nivel básico hasta avanzado: bloques anónimos,
+                procedimientos almacenados, funciones, paquetes, cursores explícitos, triggers y
+                manejo de excepciones. El enfoque fue escribir código que va más allá del SELECT —
+                lógica de negocio dentro del motor de base de datos.
+              </p>
+            </section>
+
+            <section class="content-container">
+              <h3>Evaluaciones</h3>
+              <div class="scores-grid">
+                <div class="score-card">
+                  <div class="score-label">Cuestionario PL/SQL Básico–Medio</div>
+                  <div class="score-value">47.25 <span class="score-max">/ 50</span></div>
+                  <p class="score-desc">
+                    Cubre sintaxis de bloques anónimos, control de flujo (IF, LOOP, WHILE),
+                    variables y tipos de datos, y uso de cursores implícitos.
+                  </p>
+                </div>
+                <div class="score-card">
+                  <div class="score-label">Cuestionario PL/SQL Avanzado</div>
+                  <div class="score-value">46.75 <span class="score-max">/ 50</span></div>
+                  <p class="score-desc">
+                    Cubre paquetes, triggers complejos, manejo de excepciones encadenadas,
+                    cursores explícitos con parámetros y colecciones PL/SQL.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Ejercicios aplicados</h3>
+              <div class="exercises-list">
+                <Exercise
+                  title="Procedimiento de actualización con manejo de excepciones"
+                  date="2026-02"
+                  language="plsql"
+                  context="Procedimiento que actualiza el salario de un empleado dado su ID, con validación de existencia y manejo de excepciones para casos no encontrados o violaciones de restricción."
+                  code={`CREATE OR REPLACE PROCEDURE actualizar_salario(
+  p_employee_id IN NUMBER,
+  p_nuevo_salario IN NUMBER
+) IS
+  v_count NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_count
+  FROM HR.EMPLOYEES
+  WHERE employee_id = p_employee_id;
+
+  IF v_count = 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Empleado no encontrado: ' || p_employee_id);
+  END IF;
+
+  UPDATE HR.EMPLOYEES
+  SET salary = p_nuevo_salario
+  WHERE employee_id = p_employee_id;
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE;
+END actualizar_salario;`}
+                  reflection="Lo que más me costó fue entender cuándo usar RAISE vs RAISE_APPLICATION_ERROR. El primero relanza la excepción original; el segundo crea una nueva con mensaje propio. El WHEN OTHERS con ROLLBACK me dejó claro que la gestión de transacciones dentro de un SP tiene sus propias reglas."
+                  scriptUrl="/bd2/scripts/plsql/actualizar_salario.sql"
+                />
+                <Exercise
+                  title="Trigger de auditoría sobre EMPLOYEES"
+                  date="2026-02"
+                  language="plsql"
+                  context="Trigger AFTER UPDATE sobre la tabla EMPLOYEES que registra cada cambio de salario en una tabla de auditoría, capturando valores anterior y nuevo, usuario y fecha."
+                  code={`-- Tabla de auditoría (crear antes del trigger)
+CREATE TABLE HR.AUDITORIA_SALARIOS (
+  audit_id     NUMBER GENERATED ALWAYS AS IDENTITY,
+  employee_id  NUMBER,
+  salario_ant  NUMBER,
+  salario_new  NUMBER,
+  usuario      VARCHAR2(50),
+  fecha        TIMESTAMP DEFAULT SYSTIMESTAMP
+);
+
+CREATE OR REPLACE TRIGGER trg_auditoria_salario
+AFTER UPDATE OF salary ON HR.EMPLOYEES
+FOR EACH ROW
+BEGIN
+  INSERT INTO HR.AUDITORIA_SALARIOS
+    (employee_id, salario_ant, salario_new, usuario)
+  VALUES
+    (:OLD.employee_id, :OLD.salary, :NEW.salary, USER);
+END;`}
+                  reflection="El punto de inflexión fue entender la diferencia entre BEFORE y AFTER: BEFORE permite cancelar la operación lanzando una excepción; AFTER garantiza que el dato ya fue grabado. Para auditoría siempre es AFTER. Los pseudoregistros :OLD y :NEW son lo más potente del trigger."
+                  scriptUrl="/bd2/scripts/plsql/trg_auditoria_salario.sql"
+                />
+                <Exercise
+                  title="Paquete con cursor explícito para reporte de empleados"
+                  date="2026-03"
+                  language="plsql"
+                  context="Paquete PL/SQL que encapsula un cursor explícito y un procedimiento de reporte, listando empleados por departamento con su salario y número de trabajos históricos."
+                  code={`CREATE OR REPLACE PACKAGE pkg_reportes AS
+  PROCEDURE reporte_por_departamento(p_dept_id IN NUMBER);
+END pkg_reportes;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg_reportes AS
+
+  CURSOR c_empleados(p_dept NUMBER) IS
+    SELECT e.first_name || ' ' || e.last_name AS nombre,
+           e.salary,
+           COUNT(jh.job_id) AS trabajos_anteriores
+    FROM HR.EMPLOYEES e
+    LEFT JOIN HR.JOB_HISTORY jh ON e.employee_id = jh.employee_id
+    WHERE e.department_id = p_dept
+    GROUP BY e.first_name, e.last_name, e.salary;
+
+  PROCEDURE reporte_por_departamento(p_dept_id IN NUMBER) IS
+    v_emp c_empleados%ROWTYPE;
+  BEGIN
+    OPEN c_empleados(p_dept_id);
+    LOOP
+      FETCH c_empleados INTO v_emp;
+      EXIT WHEN c_empleados%NOTFOUND;
+      DBMS_OUTPUT.PUT_LINE(v_emp.nombre || ' | ' || v_emp.salary
+        || ' | Historial: ' || v_emp.trabajos_anteriores);
+    END LOOP;
+    CLOSE c_empleados;
+  END;
+
+END pkg_reportes;`}
+                  reflection="Antes de los paquetes declaraba cursores dentro de cada procedimiento. El paquete me forzó a pensar en qué es público (spec) y qué es implementación (body). Es la primera vez que sentí que PL/SQL tiene algo parecido a encapsulación real."
+                  scriptUrl="/bd2/scripts/plsql/pkg_reportes.sql"
+                />
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Reflexión sobre el Test escrito 1</h3>
+              <div class="reflection-block">
+                <p>
+                  El Test 1 no fue bien — obtuve 0.2/5. Lo que me hizo daño fue la lectura de
+                  código con errores sutiles bajo presión de tiempo: un COMMIT dentro de un
+                  trigger, un cursor que no cerraba, una excepción que atrapaba demasiado con
+                  WHEN OTHERS sin re-lanzar.
+                </p>
+                <p>
+                  Después del test repasé cada uno de esos patrones con ejercicios propios.
+                  Los cuestionarios del curso (47.25 y 46.75 sobre 50) muestran que el
+                  conocimiento está, pero el test escrito exigía velocidad de lectura que no
+                  tenía entrenada. Es una deuda de práctica, no de comprensión.
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .scores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .scores-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .score-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .score-label {
+    color: #a8a8a8;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .score-value {
+    color: #6ee7b7;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .score-max {
+    color: #555;
+    font-size: 16px;
+  }
+
+  .score-desc {
+    font-size: 13px;
+    line-height: 20px;
+    margin: 0;
+  }
+
+  .reflection-block {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2e2e2e;
+    border-left: 3px solid #7ec5ff;
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .reflection-block p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .reflection-block p:last-child {
+    margin-bottom: 0;
+  }
+</style>

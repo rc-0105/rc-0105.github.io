@@ -1,0 +1,218 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="Distribuidas y HA | Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/bases-de-datos-ii" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Bases de Datos II</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <div>
+              <h1>04 · Distribuidas, HA/Backups y ETL/ELT</h1>
+              <span class="unit-status-badge">Esquema — en consolidación</span>
+            </div>
+
+            <section class="content-container">
+              <h3>Contexto</h3>
+              <p>
+                Estas notas resumen lo trabajado para el Test escrito 2 (NoSQL + Distribuidas +
+                HA/Backups + ETL/ELT). El contenido está organizado por tema, con los conceptos
+                clave y los tradeoffs que más aparecen en ejercicios de clase.
+              </p>
+            </section>
+
+            <section class="content-container">
+              <h3>Notas de estudio</h3>
+              <div class="notes-grid">
+
+                <div class="note-card">
+                  <div class="note-title">Bases de datos distribuidas</div>
+                  <div class="note-tags">
+                    <span class="single-chip small-chip">CAP Theorem</span>
+                    <span class="single-chip small-chip">Particionamiento</span>
+                    <span class="single-chip small-chip">Sharding</span>
+                  </div>
+                  <p>
+                    El teorema CAP dice que un sistema distribuido solo puede garantizar dos de
+                    tres propiedades al mismo tiempo: Consistencia, Disponibilidad, Tolerancia
+                    a particiones. La mayoría de los sistemas NoSQL elige AP (disponibilidad +
+                    tolerancia), sacrificando consistencia fuerte por consistencia eventual.
+                  </p>
+                  <p>
+                    Sharding divide los datos horizontalmente entre nodos. El reto es elegir el
+                    shard key: una mala elección genera hotspots donde un nodo recibe
+                    desproporcionadamente más carga.
+                  </p>
+                </div>
+
+                <div class="note-card">
+                  <div class="note-title">Alta disponibilidad (HA)</div>
+                  <div class="note-tags">
+                    <span class="single-chip small-chip">Replicación</span>
+                    <span class="single-chip small-chip">Replica Sets</span>
+                    <span class="single-chip small-chip">Failover</span>
+                  </div>
+                  <p>
+                    La replicación maestro-esclavo mantiene copias en múltiples nodos. El
+                    nodo primario recibe escrituras; los secundarios replican de forma asíncrona
+                    (o síncrona en configuraciones más estrictas). En MongoDB, los Replica Sets
+                    hacen failover automático por elección: si el primary cae, los secundarios
+                    eligen un nuevo primary sin intervención manual.
+                  </p>
+                </div>
+
+                <div class="note-card">
+                  <div class="note-title">Backups y recuperación</div>
+                  <div class="note-tags">
+                    <span class="single-chip small-chip">Full</span>
+                    <span class="single-chip small-chip">Incremental</span>
+                    <span class="single-chip small-chip">RPO / RTO</span>
+                  </div>
+                  <p>
+                    Tres estrategias principales: backup completo (toda la base, costoso pero
+                    simple de restaurar), incremental (solo los cambios desde el último backup,
+                    restauración más compleja), diferencial (cambios desde el último backup
+                    completo, compromiso entre los dos).
+                  </p>
+                  <p>
+                    RPO (Recovery Point Objective): cuántos datos podemos perder, en tiempo.
+                    RTO (Recovery Time Objective): cuánto tiempo podemos estar caídos. Estos
+                    dos valores definen qué estrategia de backup tiene sentido.
+                  </p>
+                </div>
+
+                <div class="note-card">
+                  <div class="note-title">ETL vs ELT</div>
+                  <div class="note-tags">
+                    <span class="single-chip small-chip">ETL</span>
+                    <span class="single-chip small-chip">ELT</span>
+                    <span class="single-chip small-chip">Data Warehouse</span>
+                  </div>
+                  <p>
+                    ETL (Extract–Transform–Load): se transforma antes de cargar. Apropiado
+                    cuando el destino tiene capacidad limitada o los datos vienen sucios.
+                  </p>
+                  <p>
+                    ELT (Extract–Load–Transform): se carga crudo y se transforma en el destino.
+                    Funciona cuando el destino es un data warehouse potente (BigQuery, Redshift,
+                    Snowflake) que puede procesar grandes volúmenes más barato que una capa
+                    de transformación intermedia.
+                  </p>
+                </div>
+
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Reflexión sobre el Test escrito 2</h3>
+              <div class="reflection-block">
+                <p>
+                  Obtuve 2.8/5. Lo que más me costó fue la consistencia eventual: sé qué
+                  significa teóricamente, pero en un escenario concreto ("¿qué pasa si el
+                  nodo B recibe una lectura mientras se está replicando desde A?") me costó
+                  articularlo rápido bajo presión.
+                </p>
+                <p>
+                  Los tradeoffs del CAP los estudié pero en el test me confundí con un caso
+                  donde la respuesta correcta era CP, no AP, porque el enunciado implicaba
+                  que la consistencia no era negociable. Después de revisarlo quedó claro que
+                  hay que leer el dominio antes de aplicar CAP mecánicamente.
+                </p>
+                <p>
+                  Lo que consolidé: diferencias ETL/ELT, tipos de backup y sus RPO/RTO, y
+                  cómo funciona un Replica Set de MongoDB en failover. Eso salió bien.
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .unit-status-badge {
+    color: #a8a8a8;
+    background-color: rgba(168, 168, 168, 0.08);
+    border: 1px solid rgba(168, 168, 168, 0.2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 8px;
+  }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 680px) {
+    .notes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .note-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .note-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .note-card p {
+    font-size: 13px;
+    line-height: 20px;
+    margin: 0;
+  }
+
+  .reflection-block {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2e2e2e;
+    border-left: 3px solid #7ec5ff;
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+
+  .reflection-block p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .reflection-block p:last-child {
+    margin-bottom: 0;
+  }
+</style>

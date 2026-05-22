@@ -1,0 +1,144 @@
+---
+interface Props {
+  number: string;
+  title: string;
+  description: string;
+  href: string;
+  topics: string[];
+  status?: 'completo' | 'en-progreso' | 'esquema';
+}
+const { number, title, description, href, topics, status = 'completo' } = Astro.props;
+
+const statusLabel = {
+  completo: 'Completo',
+  'en-progreso': 'En progreso',
+  esquema: 'Esquema',
+};
+
+const statusClass = {
+  completo: 'badge-complete',
+  'en-progreso': 'badge-progress',
+  esquema: 'badge-outline',
+};
+---
+
+<a href={href} class="unit-card">
+  <div class="unit-number-circle">
+    <span>{number}</span>
+  </div>
+  <div class="unit-body">
+    <div class="unit-header">
+      <h4 class="unit-title">{title}</h4>
+      <span class={`unit-badge ${statusClass[status]}`}>{statusLabel[status]}</span>
+    </div>
+    <p class="unit-description">{description}</p>
+    <div class="unit-topics">
+      {topics.map(topic => (
+        <span class="single-chip small-chip">{topic}</span>
+      ))}
+    </div>
+  </div>
+</a>
+
+<style>
+  .unit-card {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-decoration: none;
+    transition: transform 0.12s ease, border-color 0.12s ease, background-color 0.12s ease;
+  }
+
+  .unit-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(126, 197, 255, 0.4);
+    background-color: rgba(126, 197, 255, 0.04);
+  }
+
+  .unit-number-circle {
+    min-width: 48px;
+    min-height: 48px;
+    border-radius: 50%;
+    background-color: rgba(126, 197, 255, 0.1);
+    border: 1px solid rgba(126, 197, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .unit-number-circle span {
+    color: #7ec5ff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .unit-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .unit-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .unit-title {
+    color: #fff;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .unit-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .badge-complete {
+    color: #6ee7b7;
+    background-color: rgba(110, 231, 183, 0.1);
+    border: 1px solid rgba(110, 231, 183, 0.25);
+  }
+
+  .badge-progress {
+    color: #fbbf24;
+    background-color: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+  }
+
+  .badge-outline {
+    color: #a8a8a8;
+    background-color: rgba(168, 168, 168, 0.08);
+    border: 1px solid rgba(168, 168, 168, 0.2);
+  }
+
+  .unit-description {
+    color: #a8a8a8;
+    margin: 0;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .unit-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+</style>

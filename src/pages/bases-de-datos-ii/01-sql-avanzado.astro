@@ -1,0 +1,110 @@
+---
+import Header from '../../components/Header.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Exercise from '../../components/Exercise.astro';
+---
+
+<!DOCTYPE html>
+<html>
+  <Header title="SQL Avanzado | Bases de Datos II | Ricardo Carrero" />
+  <body>
+    <div class="content">
+      <Sidebar selectedItem="bd2" />
+      <nav class="main">
+        <div class="container">
+          <div class="back-nav-container">
+            <a href="/bases-de-datos-ii" class="back-nav-button w-inline-block">
+              <img src="/assets/back.svg" loading="lazy" alt="" class="back-nav-img" />
+              <div>Bases de Datos II</div>
+            </a>
+          </div>
+          <div class="content-container">
+            <h1>01 · SQL Avanzado y Transacciones</h1>
+
+            <section class="content-container">
+              <h3>Contexto</h3>
+              <p>
+                Esta unidad trabajó SQL más allá del SELECT básico: joins múltiples, agrupaciones
+                con lógica de negocio, self-joins y control transaccional con SAVEPOINT y ROLLBACK
+                selectivo. Todos los ejercicios de clase usan el esquema HR de Oracle, que incluye
+                tablas de empleados, departamentos, ubicaciones, países y historial de trabajos.
+              </p>
+            </section>
+
+            <section class="content-container">
+              <h3>Ejercicios de clase — esquema HR (Oracle)</h3>
+              <div class="exercises-list">
+                <Exercise
+                  title="Empleados y número de trabajos"
+                  date="11/02/2026"
+                  context="Mostrar el nombre de cada empleado y el número total de trabajos que ha tenido, incluyendo el actual, mediante JOIN entre EMPLOYEES y JOB_HISTORY."
+                  code={`SELECT CONCAT(e.first_name, ' ', e.LAST_NAME) AS nombre,
+       COUNT(jh.JOB_ID) + 1 AS trabajos
+FROM HR.EMPLOYEES e
+JOIN hr.JOB_HISTORY jh ON e.EMPLOYEE_ID = jh.EMPLOYEE_ID
+GROUP BY nombre;`}
+                  reflection="El reto fue contar correctamente los trabajos sin omitir el actual: COUNT sobre JOB_HISTORY solo cuenta los pasados, así que se suma 1. Me ayudó a entender cuándo un JOIN puede ocultar registros si no se modela bien la lógica de negocio."
+                  scriptUrl="/scriptsSQL/Ejercicio1.sql"
+                />
+
+                <Exercise
+                  title="Empleados en Europa con salario entre 7000 y 9000"
+                  date="06/02/2026"
+                  context="Cruzar EMPLOYEES → DEPARTMENTS → LOCATIONS → COUNTRIES para filtrar por región y rango salarial."
+                  code={`SELECT CONCAT(e.first_name, ' ', e.LAST_NAME) AS nombre,
+       e.salary,
+       c.COUNTRY_NAME
+FROM HR.EMPLOYEES e
+JOIN hr.DEPARTMENTS d   ON e.DEPARTMENT_ID = d.DEPARTMENT_ID
+JOIN HR.LOCATIONS l     ON d.location_ID   = l.location_ID
+JOIN hr.countries c     ON l.country_ID    = c.country_ID
+WHERE c.REGION_ID = 10
+  AND SALARY BETWEEN 7000 AND 9000;`}
+                  reflection="Cuatro JOINs encadenados me obligaron a planear las claves foráneas antes de escribir. Aprendí que el orden de los JOINs no afecta el resultado, pero sí mucho la legibilidad."
+                  scriptUrl="/scriptsSQL/Ejercicio2.sql"
+                />
+
+                <Exercise
+                  title="Empleado y su gerente (self-join)"
+                  date="06/02/2026"
+                  context="Self-join sobre EMPLOYEES para emparejar cada empleado con su manager."
+                  code={`SELECT CONCAT(e.first_name, ' ', e.LAST_NAME) AS nombre,
+       CONCAT(m.first_name, ' ', m.LAST_NAME) AS manager
+FROM HR.EMPLOYEES e
+JOIN hr.EMPLOYEES m ON e.manager_id = m.employee_id
+ORDER BY manager;`}
+                  reflection="Primera vez que hice un self-join. Lo difícil fue ver que la tabla actúa como dos: una como empleado (e) y otra como gerente (m). Cambió mi forma de pensar las relaciones recursivas."
+                  scriptUrl="/scriptsSQL/Ejercicio3.sql"
+                />
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Taller aplicado 1 — Transacciones ACID</h3>
+              <div class="exercises-list">
+                <Exercise
+                  title="Taller 1: Transacciones ACID sobre esquema HR"
+                  date="2026-02"
+                  language="sql"
+                  context="Ajustes salariales con SAVEPOINT, ROLLBACK selectivo y CTEs encadenadas para auditar antes/después del cambio."
+                  code={`-- Script completo disponible en descarga
+-- Pendiente de cargar en este portafolio`}
+                  reflection="Lo que más me costó fue diferenciar cuándo un SAVEPOINT realmente protege la integridad y cuándo solo retrasa el problema. El ejercicio me hizo entender ACID en código, no solo en teoría."
+                  scriptUrl="/bd2/scripts/sql/taller1-acid.sql"
+                />
+              </div>
+            </section>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>
+
+<style>
+  .exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+</style>
