@@ -24,10 +24,19 @@ import Exercise from '../../components/Exercise.astro';
             <section class="content-container">
               <h3>Contexto</h3>
               <p>
-                El taller MQL se realizó sobre el dataset <code>sample_airbnb</code> de MongoDB
-                Atlas, colección <code>listingsAndReviews</code>. Los 26 ejercicios cubren las
-                cuatro operaciones principales: INSERT, FIND, UPDATE y AGGREGATE.
-                Calificación total: <span class="score-inline">5 / 5</span>.
+                El Taller MQL (Docente: Christian Felipe Duarte) tuvo como objetivo consolidar
+                las operaciones fundamentales de MQL — <code>find</code>, <code>sort</code>,
+                <code>project</code>, <code>insertOne</code>, <code>updateOne</code> y
+                <code>updateMany</code> — para gestionar datos de forma eficiente en un entorno
+                NoSQL. El caso práctico fue la colección <code>listingsAndReviews</code> del
+                dataset <code>sample_airbnb</code> de MongoDB Atlas.
+              </p>
+              <p>
+                El taller constaba de 30 ejercicios en total. En esta página se documentan los
+                primeros 26 (scripts disponibles para descarga); los ejercicios 27–30
+                ($bucket por rangos de precio, $lookup simulado, densidad de huéspedes por
+                property_type y análisis de últimas reviews por año) están pendientes de subir.
+                Calificación: <span class="score-inline">5 / 5</span>.
               </p>
             </section>
 
@@ -240,6 +249,24 @@ db.listingsAndReviews.insertOne({
                   <a href="/bd2/scripts/mongo/25_Ejercicio.mongodb.js" download class="dl-chip">25 · $project $toInt</a>
                   <a href="/bd2/scripts/mongo/26_Ejercicio.mongodb.js" download class="dl-chip">26 · $avg review score</a>
                 </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Taller — Patrones de Modelado NoSQL</h3>
+              <div class="info-block">
+                <p>
+                  Actividad complementaria del mismo docente: video de 12–13 minutos explicando
+                  los patrones de modelado de documentos de MongoDB (basados en la documentación
+                  oficial de MongoDB). El equipo — Anthony Vega, Samuel Mesa y Ricardo Carrero —
+                  debía cubrir todos los patrones, mostrando para cada uno su definición, cuándo
+                  usarlo y un ejemplo concreto en JSON idealmente ligado al proyecto SpotiClone.
+                </p>
+                <p>
+                  Criterios de evaluación: contenido técnico (40 %), claridad de los ejemplos
+                  (30 %), calidad de producción visual y audio (20 %), duración y participación
+                  de todos los integrantes (10 %).
+                </p>
               </div>
             </section>
 
