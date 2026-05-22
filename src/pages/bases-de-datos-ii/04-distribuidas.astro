@@ -114,27 +114,6 @@ import Sidebar from '../../components/Sidebar.astro';
               </div>
             </section>
 
-            <section class="content-container">
-              <h3>Reflexión sobre el Test escrito 2</h3>
-              <div class="reflection-block">
-                <p>
-                  Obtuve 2.8/5. Lo que más me costó fue la consistencia eventual: sé qué
-                  significa teóricamente, pero en un escenario concreto ("¿qué pasa si el
-                  nodo B recibe una lectura mientras se está replicando desde A?") me costó
-                  articularlo rápido bajo presión.
-                </p>
-                <p>
-                  Los tradeoffs del CAP los estudié pero en el test me confundí con un caso
-                  donde la respuesta correcta era CP, no AP, porque el enunciado implicaba
-                  que la consistencia no era negociable. Después de revisarlo quedó claro que
-                  hay que leer el dominio antes de aplicar CAP mecánicamente.
-                </p>
-                <p>
-                  Lo que consolidé: diferencias ETL/ELT, tipos de backup y sus RPO/RTO, y
-                  cómo funciona un Replica Set de MongoDB en failover. Eso salió bien.
-                </p>
-              </div>
-            </section>
           </div>
         </div>
       </nav>
@@ -198,21 +177,4 @@ import Sidebar from '../../components/Sidebar.astro';
     margin: 0;
   }
 
-  .reflection-block {
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid #2e2e2e;
-    border-left: 3px solid #7ec5ff;
-    border-radius: 8px;
-    padding: 20px 24px;
-  }
-
-  .reflection-block p {
-    margin: 0 0 12px;
-    font-size: 14px;
-    line-height: 22px;
-  }
-
-  .reflection-block p:last-child {
-    margin-bottom: 0;
-  }
 </style>
