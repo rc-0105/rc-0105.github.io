@@ -24,78 +24,222 @@ import Exercise from '../../components/Exercise.astro';
             <section class="content-container">
               <h3>Contexto</h3>
               <p>
-                Esta unidad fue el primer contacto serio con una base de datos documental.
-                Se trabajó modelado de colecciones, consultas MQL básicas y avanzadas,
-                pipelines de agregación y diseño de índices. El contexto de práctica fue
-                SpotiClone, el proyecto integrador del semestre.
+                El taller MQL se realizó sobre el dataset <code>sample_airbnb</code> de MongoDB
+                Atlas, colección <code>listingsAndReviews</code>. Los 26 ejercicios cubren las
+                cuatro operaciones principales: INSERT, FIND, UPDATE y AGGREGATE.
+                Calificación total: <span class="score-inline">5 / 5</span>.
               </p>
             </section>
 
             <section class="content-container">
-              <h3>Taller MQL</h3>
+              <h3>INSERT — Ejercicios 1 al 5</h3>
+              <p>Inserción de documentos simples y con estructura anidada, insertMany y manejo del error de _id duplicado.</p>
               <div class="exercises-list">
                 <Exercise
-                  title="Modelado, consultas y agregaciones MongoDB"
+                  title="insertOne con documento anidado"
                   date="2026-03"
                   language="javascript"
-                  context="Diseño de colecciones para SpotiClone, queries con $match, $group, $lookup, índices simples y compuestos. Calificación: 5/5."
-                  code={`// Top artistas por reproducciones — pipeline de agregación
-db.reproducciones.aggregate([
-  {
-    $match: {
-      fecha: { $gte: ISODate("2026-01-01") }
-    }
-  },
-  {
-    $group: {
-      _id: "$artista_id",
-      total_reproducciones: { $sum: 1 },
-      canciones_unicas: { $addToSet: "$cancion_id" }
-    }
-  },
-  {
-    $lookup: {
-      from: "artistas",
-      localField: "_id",
-      foreignField: "_id",
-      as: "artista_info"
-    }
-  },
-  {
-    $unwind: "$artista_info"
-  },
-  {
-    $project: {
-      nombre: "$artista_info.nombre",
-      total_reproducciones: 1,
-      canciones_distintas: { $size: "$canciones_unicas" }
-    }
-  },
-  {
-    $sort: { total_reproducciones: -1 }
-  },
-  {
-    $limit: 10
+                  context="Insertar un listing completo con campo address embebido. El documento anidado no requiere ninguna declaración previa de esquema."
+                  code={`db.listingsAndReviews.insertOne({
+  name: "Andes View Loft",
+  summary: "Loft moderno con vista a la cordillera.",
+  property_type: "Apartment",
+  price: NumberDecimal("95.00"),
+  address: {
+    country: "Chile",
+    market: "Santiago"
   }
-])`}
-                  reflection="El cambio de mentalidad relacional a documental fue más fuerte de lo que esperaba. Aprendí que $lookup no es JOIN — funciona, pero el modelado bien hecho lo evita. Si necesito $lookup en cada query, probablemente el esquema está mal modelado."
-                  scriptUrl="/bd2/scripts/mongo/taller-mql.js"
+})`}
+                  reflection="La primera diferencia real con SQL: no hay ALTER TABLE antes de insertar un campo nuevo. El documento puede tener cualquier forma. La libertad es poderosa pero exige disciplina en el modelado, porque el motor no valida nada por vos."
+                  scriptUrl="/bd2/scripts/mongo/2_Ejercicio.mongodb.js"
                 />
+                <Exercise
+                  title="insertOne con _id duplicado — error esperado"
+                  date="2026-03"
+                  language="javascript"
+                  context="Intentar insertar un documento con el _id de un documento existente para observar el WriteError de clave duplicada."
+                  code={`const existente = db.listingsAndReviews.findOne({}, { _id: 1 })
+
+db.listingsAndReviews.insertOne({
+  _id: existente._id,
+  name: "Intento Duplicado",
+  price: NumberDecimal("99.00")
+})`}
+                  reflection="MongoDB lanza E11000 duplicate key error. Es la única restricción de integridad que el motor enforce por defecto sobre cualquier colección: el _id es único. Todo lo demás depende de los índices únicos que crees vos."
+                  scriptUrl="/bd2/scripts/mongo/5_Ejercicio.mongodb.js"
+                />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts INSERT:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/mongo/1_Ejercicio.mongodb.js" download class="dl-chip">01 · insertOne simple</a>
+                  <a href="/bd2/scripts/mongo/2_Ejercicio.mongodb.js" download class="dl-chip">02 · insertOne anidado</a>
+                  <a href="/bd2/scripts/mongo/3_Ejercicio.mongodb.js" download class="dl-chip">03 · insertMany</a>
+                  <a href="/bd2/scripts/mongo/4_Ejercicio.mongodb.js" download class="dl-chip">04 · _id duplicado</a>
+                  <a href="/bd2/scripts/mongo/5_Ejercicio.mongodb.js" download class="dl-chip">05 · _id duplicado v2</a>
+                </div>
               </div>
             </section>
 
             <section class="content-container">
-              <h3>Taller MQL — Video explicativo</h3>
-              <div class="info-block">
-                <p>
-                  Como parte del taller se grabó un video explicando el modelado de las
-                  colecciones de SpotiClone y las queries desarrolladas: criterios de diseño
-                  de documentos embebidos vs. referencias, justificación del esquema elegido
-                  y demostración de los pipelines en MongoDB Compass.
-                </p>
-                <p class="score-inline">
-                  Calificación: <span class="score-highlight">5 / 5</span>
-                </p>
+              <h3>FIND — Ejercicios 6 al 15</h3>
+              <p>Consultas con comparadores, campos anidados con dot notation, operadores de array, regex y sort/limit.</p>
+              <div class="exercises-list">
+                <Exercise
+                  title="Query sobre campo anidado con dot notation"
+                  date="2026-03"
+                  language="javascript"
+                  context="Filtrar listings en Brasil usando dot notation sobre el campo address.country. Proyección explícita para traer solo name y price."
+                  code={`db.listingsAndReviews.find(
+  { "address.country": "Brazil" },
+  { _id: 0, name: 1, price: 1 }
+)`}
+                  reflection="La dot notation es lo que reemplaza el JOIN para acceder a documentos embebidos. La proyección con _id: 0 no es opcional si no querés ver el ObjectId — MongoDB lo incluye por defecto a diferencia de un SELECT *."
+                  scriptUrl="/bd2/scripts/mongo/6_Ejercicio.mongodb.js"
+                />
+                <Exercise
+                  title="sort + limit — Top 10 más caros"
+                  date="2026-03"
+                  language="javascript"
+                  context="Traer los 10 listings con precio más alto, filtrando nulls y proyectando nombre, precio y país."
+                  code={`db.listingsAndReviews.find(
+  { price: { $ne: null } },
+  { _id: 0, name: 1, price: 1, "address.country": 1 }
+)
+.sort({ price: -1 })
+.limit(10)`}
+                  reflection="El encadenamiento find().sort().limit() es la forma idiomática en MQL. Orden importa: si ponés limit() antes de sort() en la shell funciona igual, pero en drivers como el de Java el orden sí puede cambiar el plan de ejecución."
+                  scriptUrl="/bd2/scripts/mongo/14_Ejercicio.mongodb.js"
+                />
+                <Exercise
+                  title="Query por elemento en array de amenities"
+                  date="2026-03"
+                  language="javascript"
+                  context='Encontrar todos los listings que incluyen "Heating" dentro del array amenities, sin operadores especiales.'
+                  code={`db.listingsAndReviews.find(
+  { amenities: "Heating" },
+  { _id: 0, name: 1, amenities: 1, price: 1 }
+)`}
+                  reflection={`Lo que me sorprendió: MongoDB matchea "Heating" dentro del array amenities sin $elemMatch ni nada especial. Si el valor está en alguna posición del array, el documento aparece. En SQL necesitarías una tabla pivot o un JOIN para hacer esto.`}
+                  scriptUrl="/bd2/scripts/mongo/12_Ejercicio.mongodb.js"
+                />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts FIND:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/mongo/6_Ejercicio.mongodb.js" download class="dl-chip">06 · address.country</a>
+                  <a href="/bd2/scripts/mongo/7_Ejercicio.mongodb.js" download class="dl-chip">07 · beds $gt 5</a>
+                  <a href="/bd2/scripts/mongo/8_Ejercicio.mongodb.js" download class="dl-chip">08 · price $lt 75</a>
+                  <a href="/bd2/scripts/mongo/9_Ejercicio.mongodb.js" download class="dl-chip">09 · $and property+market</a>
+                  <a href="/bd2/scripts/mongo/10_Ejercicio.mongodb.js" download class="dl-chip">10 · $in House/Condo</a>
+                  <a href="/bd2/scripts/mongo/11_Ejercicio.mongodb.js" download class="dl-chip">11 · $regex Luxury</a>
+                  <a href="/bd2/scripts/mongo/12_Ejercicio.mongodb.js" download class="dl-chip">12 · array Heating</a>
+                  <a href="/bd2/scripts/mongo/13_Ejercicio.mongodb.js" download class="dl-chip">13 · $size amenities</a>
+                  <a href="/bd2/scripts/mongo/14_Ejercicio.mongodb.js" download class="dl-chip">14 · sort+limit top10</a>
+                  <a href="/bd2/scripts/mongo/15_Ejercicio.mongodb.js" download class="dl-chip">15 · last_review null</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>UPDATE — Ejercicios 16 al 20</h3>
+              <p>Actualizaciones atómicas con $set, $push, $pull, $inc y upsert.</p>
+              <div class="exercises-list">
+                <Exercise
+                  title="updateOne con $set y $push sobre array"
+                  date="2026-03"
+                  language="javascript"
+                  context="Actualizar el summary de un listing y agregar una nueva amenity al array en la misma operación atómica."
+                  code={`db.listingsAndReviews.updateOne(
+  { name: "Cabin con Vista al Lago" },
+  {
+    $set: {
+      summary: "Cabaña actualizada con una nueva amenity."
+    },
+    $push: {
+      amenities: "Smart TV"
+    }
+  }
+)`}
+                  reflection="Combinar $set y $push en un mismo updateOne es atómico: o los dos campos se actualizan o ninguno. En SQL necesitarías dos UPDATE separados y una transacción explícita para lograr el mismo nivel de garantía."
+                  scriptUrl="/bd2/scripts/mongo/17_Ejercicio.mongodb.js"
+                />
+                <Exercise
+                  title="updateMany con $pull — eliminar elemento de array"
+                  date="2026-03"
+                  language="javascript"
+                  context='Quitar "Cable TV" del array amenities en todos los listings que lo tengan, en una sola operación.'
+                  code={`db.listingsAndReviews.updateMany(
+  { amenities: "Cable TV" },
+  { $pull: { amenities: "Cable TV" } }
+)`}
+                  reflection="$pull con el mismo valor que el filtro es el patrón limpio para limpiar un elemento de array en masa. Sin índice sobre amenities esta operación hace un collection scan completo — es el momento donde entendí por qué los índices sobre campos de array existen."
+                  scriptUrl="/bd2/scripts/mongo/19_Ejercicio.mongodb.js"
+                />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts UPDATE:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/mongo/16_Ejercicio.mongodb.js" download class="dl-chip">16 · updateOne $set</a>
+                  <a href="/bd2/scripts/mongo/17_Ejercicio.mongodb.js" download class="dl-chip">17 · $set + $push</a>
+                  <a href="/bd2/scripts/mongo/18_Ejercicio.mongodb.js" download class="dl-chip">18 · updateMany $inc</a>
+                  <a href="/bd2/scripts/mongo/19_Ejercicio.mongodb.js" download class="dl-chip">19 · updateMany $pull</a>
+                  <a href="/bd2/scripts/mongo/20_Ejercicio.mongodb.js" download class="dl-chip">20 · upsert $set</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>AGGREGATE — Ejercicios 21 al 26</h3>
+              <p>Pipelines con $match, $group, $unwind, $sort, $project y conversiones de tipo.</p>
+              <div class="exercises-list">
+                <Exercise
+                  title="$unwind + $group — frecuencia de amenities"
+                  date="2026-03"
+                  language="javascript"
+                  context="Descomponer el array amenities en documentos individuales, agrupar por amenity y contar cuántas veces aparece cada una en toda la colección. Top 5."
+                  code={`db.listingsAndReviews.aggregate([
+  { $unwind: "$amenities" },
+  {
+    $group: {
+      _id: "$amenities",
+      frequency: { $sum: 1 }
+    }
+  },
+  { $sort: { frequency: -1 } },
+  { $limit: 5 }
+])`}
+                  reflection="$unwind fue el stage más difícil de entender: convierte un documento con un array de N elementos en N documentos separados. Una vez que lo vi en la explain() quedó claro por qué es costoso en colecciones grandes sin índice — multiplica el número de documentos antes de agrupar."
+                  scriptUrl="/bd2/scripts/mongo/23_Ejercicio.mongodb.js"
+                />
+                <Exercise
+                  title="$group por país — precio promedio"
+                  date="2026-03"
+                  language="javascript"
+                  context="Calcular el precio promedio de listings agrupado por país, ordenado de mayor a menor."
+                  code={`db.listingsAndReviews.aggregate([
+  {
+    $group: {
+      _id: "$address.country",
+      average_price: { $avg: "$price" }
+    }
+  },
+  { $sort: { average_price: -1 } }
+])`}
+                  reflection="El equivalente SQL sería GROUP BY country ORDER BY AVG(price) DESC. La diferencia: acá el _id del grupo no es un campo de la misma colección sino un campo de un subdocumento. El dot notation dentro del pipeline funciona igual que en find()."
+                  scriptUrl="/bd2/scripts/mongo/22_Ejercicio.mongodb.js"
+                />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts AGGREGATE:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/mongo/21_Ejercicio.mongodb.js" download class="dl-chip">21 · $count amenities &gt; 10</a>
+                  <a href="/bd2/scripts/mongo/22_Ejercicio.mongodb.js" download class="dl-chip">22 · $avg precio por país</a>
+                  <a href="/bd2/scripts/mongo/23_Ejercicio.mongodb.js" download class="dl-chip">23 · $unwind amenities top5</a>
+                  <a href="/bd2/scripts/mongo/24_Ejercicio.mongodb.js" download class="dl-chip">24 · $group por property_type</a>
+                  <a href="/bd2/scripts/mongo/25_Ejercicio.mongodb.js" download class="dl-chip">25 · $project $toInt</a>
+                  <a href="/bd2/scripts/mongo/26_Ejercicio.mongodb.js" download class="dl-chip">26 · $avg review score</a>
+                </div>
               </div>
             </section>
 
@@ -104,15 +248,16 @@ db.reproducciones.aggregate([
               <div class="info-block">
                 <p>
                   Los índices en MongoDB aceleran las lecturas pero tienen costo en escritura:
-                  cada INSERT o UPDATE debe actualizar también el árbol B del índice. La regla
-                  práctica es crear índices solo sobre los campos que aparecen en los filtros
-                  frecuentes (<code>$match</code>, <code>find</code>) y en los sort de queries
-                  críticas.
+                  cada INSERT o UPDATE debe actualizar el árbol B del índice. La regla práctica
+                  es crear índices solo sobre los campos que aparecen en los filtros frecuentes
+                  (<code>$match</code>, <code>find</code>) y en los sort de queries críticas.
                 </p>
                 <p>
-                  Para SpotiClone creamos índice compuesto sobre <code>{"{ artista_id: 1, fecha: -1 }"}</code>
-                  en la colección <code>reproducciones</code>, que es la más consultada en los
-                  reportes de top artistas por período.
+                  Para la colección <code>listingsAndReviews</code> el índice más útil sería
+                  sobre <code>{"{ \"address.country\": 1, price: -1 }"}</code> dado que los
+                  ejercicios de agregación y filtrado siempre cruzan esas dos dimensiones.
+                  Un índice sobre el array <code>amenities</code> evitaría el collection scan
+                  del $pull masivo del ejercicio 19.
                 </p>
               </div>
             </section>
@@ -130,6 +275,50 @@ db.reproducciones.aggregate([
     gap: 24px;
   }
 
+  .score-inline {
+    color: #6ee7b7;
+    font-weight: 600;
+  }
+
+  .session-downloads {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+  }
+
+  .downloads-label {
+    color: #666;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+  }
+
+  .downloads-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dl-chip {
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.06);
+    border: 1px solid rgba(126, 197, 255, 0.18);
+    border-radius: 6px;
+    padding: 5px 10px;
+    text-decoration: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    transition: background-color 0.1s;
+  }
+
+  .dl-chip:hover {
+    background-color: rgba(126, 197, 255, 0.12);
+  }
+
   .info-block {
     background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid #2e2e2e;
@@ -143,9 +332,7 @@ db.reproducciones.aggregate([
     margin: 0 0 12px;
   }
 
-  .info-block p:last-child {
-    margin-bottom: 0;
-  }
+  .info-block p:last-child { margin-bottom: 0; }
 
   .info-block code {
     font-family: 'IBM Plex Mono', monospace;
@@ -156,13 +343,12 @@ db.reproducciones.aggregate([
     border-radius: 3px;
   }
 
-  .score-inline {
-    color: #a8a8a8;
-    font-size: 13px;
-  }
-
-  .score-highlight {
-    color: #6ee7b7;
-    font-weight: 600;
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
   }
 </style>
