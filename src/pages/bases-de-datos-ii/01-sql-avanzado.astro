@@ -26,8 +26,8 @@ import Exercise from '../../components/Exercise.astro';
               <p>
                 Esta unidad trabajó SQL más allá del SELECT básico: joins múltiples, agrupaciones
                 con lógica de negocio, self-joins y control transaccional con SAVEPOINT y ROLLBACK
-                selectivo. Todos los ejercicios de clase usan el esquema HR de Oracle, que incluye
-                tablas de empleados, departamentos, ubicaciones, países y historial de trabajos.
+                selectivo. Los ejercicios de clase usan el esquema HR de Oracle; el taller aplicado
+                usó un entorno de variantes con tablas T1_% sobre el mismo esquema extendido.
               </p>
             </section>
 
@@ -44,7 +44,7 @@ FROM HR.EMPLOYEES e
 JOIN hr.JOB_HISTORY jh ON e.EMPLOYEE_ID = jh.EMPLOYEE_ID
 GROUP BY nombre;`}
                   reflection="El reto fue contar correctamente los trabajos sin omitir el actual: COUNT sobre JOB_HISTORY solo cuenta los pasados, así que se suma 1. Me ayudó a entender cuándo un JOIN puede ocultar registros si no se modela bien la lógica de negocio."
-                  scriptUrl="/scriptsSQL/Ejercicio1.sql"
+                  scriptUrl="/bd2/scripts/sql/Ejercicio1.sql"
                 />
 
                 <Exercise
@@ -61,7 +61,7 @@ JOIN hr.countries c     ON l.country_ID    = c.country_ID
 WHERE c.REGION_ID = 10
   AND SALARY BETWEEN 7000 AND 9000;`}
                   reflection="Cuatro JOINs encadenados me obligaron a planear las claves foráneas antes de escribir. Aprendí que el orden de los JOINs no afecta el resultado, pero sí mucho la legibilidad."
-                  scriptUrl="/scriptsSQL/Ejercicio2.sql"
+                  scriptUrl="/bd2/scripts/sql/Ejercicio2.sql"
                 />
 
                 <Exercise
@@ -74,22 +74,67 @@ FROM HR.EMPLOYEES e
 JOIN hr.EMPLOYEES m ON e.manager_id = m.employee_id
 ORDER BY manager;`}
                   reflection="Primera vez que hice un self-join. Lo difícil fue ver que la tabla actúa como dos: una como empleado (e) y otra como gerente (m). Cambió mi forma de pensar las relaciones recursivas."
-                  scriptUrl="/scriptsSQL/Ejercicio3.sql"
+                  scriptUrl="/bd2/scripts/sql/Ejercicio3.sql"
                 />
               </div>
             </section>
 
             <section class="content-container">
               <h3>Taller aplicado 1 — Transacciones ACID</h3>
+              <p>
+                Taller en equipo (Samuel Mesa y Ricardo Carrero). Variante 1 sobre tablas
+                T1_EMPLOYEES, T1_DEPARTMENTS, T1_JOB_HISTORY y AUDIT_SALARY_ADJUSTMENTS_T1.
+                El objetivo fue implementar un proceso completo de ajuste salarial con diagnóstico,
+                elegibilidad, prevalidación, ejecución transaccional y validación posterior.
+              </p>
               <div class="exercises-list">
                 <Exercise
-                  title="Taller 1: Transacciones ACID sobre esquema HR"
+                  title="Taller 1: Diagnóstico y elegibilidad con CTEs encadenadas"
                   date="2026-02"
                   language="sql"
-                  context="Ajustes salariales con SAVEPOINT, ROLLBACK selectivo y CTEs encadenadas para auditar antes/después del cambio."
-                  code={`-- Script completo disponible en descarga
--- Pendiente de cargar en este portafolio`}
-                  reflection="Lo que más me costó fue diferenciar cuándo un SAVEPOINT realmente protege la integridad y cuándo solo retrasa el problema. El ejercicio me hizo entender ACID en código, no solo en teoría."
+                  context="La consulta diagnóstica usa tres CTEs: Variante (parámetros del docente), dinfo (estadísticas por departamento) y hreciente (empleados con historial reciente). Combina DENSE_RANK() para ranking salarial y LEFT JOIN para detectar historial."
+                  code={`WITH Variante AS (
+    SELECT excluded_department_id, min_years_service,
+           recent_job_history_months, gap_high_threshold_pct,
+           gap_mid_threshold_pct, raise_high_pct, raise_mid_pct,
+           raise_low_pct, max_salary_vs_avg_pct
+    FROM t1_variants WHERE variant_id = &p_variant_id
+),
+dinfo AS (
+    SELECT department_id,
+           ROUND(AVG(salary), 2) AS dept_avg_salary,
+           MAX(salary)            AS dept_max_salary,
+           COUNT(*)               AS dept_employee_count
+    FROM t1_employees
+    WHERE department_id IS NOT NULL
+    GROUP BY department_id
+),
+hreciente AS (
+    SELECT DISTINCT jh.employee_id
+    FROM t1_job_history jh
+    CROSS JOIN Variante v
+    WHERE jh.start_date >= ADD_MONTHS(SYSDATE, -v.recent_job_history_months)
+)
+SELECT
+    e.employee_id, e.first_name, e.last_name, e.job_id,
+    d.department_name, e.salary, e.hire_date,
+    ROUND(MONTHS_BETWEEN(SYSDATE, e.hire_date) / 12, 1) AS years_service,
+    ds.dept_avg_salary, ds.dept_max_salary, ds.dept_employee_count,
+    ROUND(
+        CASE WHEN e.salary < ds.dept_avg_salary
+             THEN (ds.dept_avg_salary - e.salary) / ds.dept_avg_salary * 100
+             ELSE 0 END, 2) AS pct_gap_to_avg,
+    CASE WHEN rh.employee_id IS NOT NULL THEN 'SI' ELSE 'NO' END
+        AS recent_job_history_flag,
+    DENSE_RANK() OVER (
+        PARTITION BY e.department_id ORDER BY e.salary DESC
+    ) AS salary_rank_in_department
+FROM t1_employees   e
+JOIN t1_departments d  ON e.department_id = d.department_id
+JOIN dinfo     ds      ON e.department_id = ds.department_id
+LEFT JOIN hreciente rh ON e.employee_id   = rh.employee_id
+ORDER BY e.department_id, salary_rank_in_department;`}
+                  reflection="Lo más difícil fue el CROSS JOIN con la CTE de Variante para propagar los parámetros sin hardcodear valores. La cadena dinfo → elegibles → proyeccion me hizo ver que una CTE es más que claridad: define el contrato de datos entre etapas. El SAVEPOINT antes del UPDATE y la validación intermedia con LEAST() para el tope fue lo que entendí como ACID en código real."
                   scriptUrl="/bd2/scripts/sql/taller1-acid.sql"
                 />
               </div>

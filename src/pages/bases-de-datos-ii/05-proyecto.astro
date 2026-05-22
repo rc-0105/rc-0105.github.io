@@ -59,8 +59,8 @@ import Sidebar from '../../components/Sidebar.astro';
                 </p>
                 <div class="artifact-row">
                   <span class="artifact-chip">Diagrama E-R</span>
-                  <span class="artifact-chip">DDL — creación de tablas</span>
-                  <span class="artifact-chip">DML — inserts de prueba</span>
+                  <a href="/bd2/scripts/proyecto/V1__initial_schema.sql" download class="artifact-chip artifact-dl">V1 — DDL schema PostgreSQL</a>
+                  <a href="/bd2/scripts/proyecto/V2__seed_data.sql" download class="artifact-chip artifact-dl">V2 — DML seed data</a>
                 </div>
               </div>
             </section>
@@ -218,6 +218,18 @@ import Sidebar from '../../components/Sidebar.astro';
     padding: 4px 10px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
+    text-decoration: none;
+  }
+
+  .artifact-dl {
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.06);
+    border-color: rgba(126, 197, 255, 0.18);
+    transition: background-color 0.1s;
+  }
+
+  .artifact-dl:hover {
+    background-color: rgba(126, 197, 255, 0.12);
   }
 
   .reflection-block {

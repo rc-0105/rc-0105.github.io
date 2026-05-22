@@ -25,9 +25,9 @@ import Exercise from '../../components/Exercise.astro';
               <h3>Contexto</h3>
               <p>
                 Esta unidad cubrió PL/SQL desde nivel básico hasta avanzado: bloques anónimos,
-                procedimientos almacenados, funciones, paquetes, cursores explícitos, triggers y
-                manejo de excepciones. El enfoque fue escribir código que va más allá del SELECT —
-                lógica de negocio dentro del motor de base de datos.
+                variables con <code>%TYPE</code> y <code>%ROWTYPE</code>, procedimientos almacenados,
+                cursores explícitos e implícitos, paquetes, triggers y manejo de excepciones.
+                El trabajo fue progresivo a lo largo del semestre, de menor a mayor complejidad.
               </p>
             </section>
 
@@ -38,120 +38,234 @@ import Exercise from '../../components/Exercise.astro';
                   <div class="score-label">Cuestionario PL/SQL Básico–Medio</div>
                   <div class="score-value">47.25 <span class="score-max">/ 50</span></div>
                   <p class="score-desc">
-                    Cubre sintaxis de bloques anónimos, control de flujo (IF, LOOP, WHILE),
-                    variables y tipos de datos, y uso de cursores implícitos.
+                    Sintaxis de bloques anónimos, control de flujo, variables y tipos de datos,
+                    cursores implícitos.
                   </p>
                 </div>
                 <div class="score-card">
                   <div class="score-label">Cuestionario PL/SQL Avanzado</div>
                   <div class="score-value">46.75 <span class="score-max">/ 50</span></div>
                   <p class="score-desc">
-                    Cubre paquetes, triggers complejos, manejo de excepciones encadenadas,
-                    cursores explícitos con parámetros y colecciones PL/SQL.
+                    Paquetes, triggers, manejo de excepciones encadenadas, cursores explícitos
+                    con parámetros y colecciones.
                   </p>
                 </div>
               </div>
             </section>
 
             <section class="content-container">
-              <h3>Ejercicios aplicados</h3>
+              <h3>Sesión 13/02/2026 — Bloques anónimos y variables</h3>
+              <p>
+                Primera clase de PL/SQL. El foco fue entender la estructura DECLARE/BEGIN/END
+                y las convenciones de nombres de variables (<code>vn_</code> numérico,
+                <code>vv_</code> cadena, <code>vd_</code> fecha, etc.). Se usó el esquema HR de Oracle.
+              </p>
               <div class="exercises-list">
                 <Exercise
-                  title="Procedimiento de actualización con manejo de excepciones"
-                  date="2026-02"
+                  title="Variables con %TYPE y %ROWTYPE"
+                  date="13/02/2026"
                   language="plsql"
-                  context="Procedimiento que actualiza el salario de un empleado dado su ID, con validación de existencia y manejo de excepciones para casos no encontrados o violaciones de restricción."
-                  code={`CREATE OR REPLACE PROCEDURE actualizar_salario(
-  p_employee_id IN NUMBER,
-  p_nuevo_salario IN NUMBER
-) IS
-  v_count NUMBER;
+                  context="Progresión de tres variantes: variable suelta con %TYPE para un campo, múltiples INTO para varios campos, y finalmente %ROWTYPE para traer el registro completo. Se muestra la variante %ROWTYPE sobre EMPLOYEES."
+                  code={`DECLARE
+    v_empleado HR.EMPLOYEES%ROWTYPE;
 BEGIN
-  SELECT COUNT(*) INTO v_count
-  FROM HR.EMPLOYEES
-  WHERE employee_id = p_employee_id;
+    SELECT * INTO v_empleado
+    FROM hr.EMPLOYEES
+    WHERE employee_id = 109;
 
-  IF v_count = 0 THEN
-    RAISE_APPLICATION_ERROR(-20001, 'Empleado no encontrado: ' || p_employee_id);
-  END IF;
-
-  UPDATE HR.EMPLOYEES
-  SET salary = p_nuevo_salario
-  WHERE employee_id = p_employee_id;
-
-  COMMIT;
-EXCEPTION
-  WHEN OTHERS THEN
-    ROLLBACK;
-    RAISE;
-END actualizar_salario;`}
-                  reflection="Lo que más me costó fue entender cuándo usar RAISE vs RAISE_APPLICATION_ERROR. El primero relanza la excepción original; el segundo crea una nueva con mensaje propio. El WHEN OTHERS con ROLLBACK me dejó claro que la gestión de transacciones dentro de un SP tiene sus propias reglas."
-                  scriptUrl="/bd2/scripts/plsql/actualizar_salario.sql"
+    DBMS_OUTPUT.PUT_LINE(
+        v_empleado.salary    || ' ' ||
+        v_empleado.first_name || ' ' ||
+        v_empleado.hire_date
+    );
+END;
+/`}
+                  reflection="Al principio declaraba una variable por columna. %ROWTYPE me mostró que puedo traer toda la fila sin listar cada campo. Lo que no era obvio: el tipo de cada campo se resuelve en tiempo de compilación, así que si la tabla cambia, el código también se actualiza."
+                  scriptUrl="/bd2/scripts/plsql/04-rowtype-employees.sql"
                 />
-                <Exercise
-                  title="Trigger de auditoría sobre EMPLOYEES"
-                  date="2026-02"
-                  language="plsql"
-                  context="Trigger AFTER UPDATE sobre la tabla EMPLOYEES que registra cada cambio de salario en una tabla de auditoría, capturando valores anterior y nuevo, usuario y fecha."
-                  code={`-- Tabla de auditoría (crear antes del trigger)
-CREATE TABLE HR.AUDITORIA_SALARIOS (
-  audit_id     NUMBER GENERATED ALWAYS AS IDENTITY,
-  employee_id  NUMBER,
-  salario_ant  NUMBER,
-  salario_new  NUMBER,
-  usuario      VARCHAR2(50),
-  fecha        TIMESTAMP DEFAULT SYSTIMESTAMP
-);
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts de esta sesión:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/plsql/01-fecha-sysdate.sql" download class="dl-chip">01 · Fecha con SYSDATE</a>
+                  <a href="/bd2/scripts/plsql/02-variable-tipo.sql" download class="dl-chip">02 · Variable %TYPE</a>
+                  <a href="/bd2/scripts/plsql/03-multiples-variables.sql" download class="dl-chip">03 · Múltiples INTO</a>
+                  <a href="/bd2/scripts/plsql/04-rowtype-employees.sql" download class="dl-chip">04 · %ROWTYPE Employees</a>
+                  <a href="/bd2/scripts/plsql/05-rowtype-departments.sql" download class="dl-chip">05 · %ROWTYPE Departments</a>
+                </div>
+              </div>
+            </section>
 
-CREATE OR REPLACE TRIGGER trg_auditoria_salario
-AFTER UPDATE OF salary ON HR.EMPLOYEES
-FOR EACH ROW
+            <section class="content-container">
+              <h3>Sesión 16/02/2026 — Tablas propias y primer procedimiento</h3>
+              <p>
+                Se crearon tablas propias en el esquema <code>rcarrero</code> (pais, equipo)
+                y se hicieron INSERTs masivos. La sesión cerró con el primer procedimiento
+                almacenado real del curso.
+              </p>
+              <div class="exercises-list">
+                <Exercise
+                  title="sp_actualizaPais — primer procedimiento almacenado"
+                  date="16/02/2026"
+                  language="plsql"
+                  context="Procedimiento que recibe el código y nuevo nombre de un país, actualiza la tabla rcarrero.pais y hace COMMIT. Sigue la convención de nombres sp_."
+                  code={`CREATE OR REPLACE PROCEDURE sp_actualizaPais(
+    codigo NUMBER,
+    paisN  VARCHAR2
+)
+IS
 BEGIN
-  INSERT INTO HR.AUDITORIA_SALARIOS
-    (employee_id, salario_ant, salario_new, usuario)
-  VALUES
-    (:OLD.employee_id, :OLD.salary, :NEW.salary, USER);
-END;`}
-                  reflection="El punto de inflexión fue entender la diferencia entre BEFORE y AFTER: BEFORE permite cancelar la operación lanzando una excepción; AFTER garantiza que el dato ya fue grabado. Para auditoría siempre es AFTER. Los pseudoregistros :OLD y :NEW son lo más potente del trigger."
-                  scriptUrl="/bd2/scripts/plsql/trg_auditoria_salario.sql"
+    UPDATE rcarrero.pais
+    SET nombre = LOWER(paisN)
+    WHERE codigo_pais = codigo;
+    COMMIT;
+END sp_actualizapais;
+/`}
+                  reflection="Este procedimiento tiene un COMMIT hardcodeado dentro, que después del taller de transacciones aprendí que es problemático: hace imposible combinar varias operaciones en una sola transacción sin perder el control del rollback. En producción el COMMIT debe estar en la capa que orquesta los llamados."
+                  scriptUrl="/bd2/scripts/plsql/09-sp-actualiza-pais.sql"
                 />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts de esta sesión:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/plsql/06-insert-paises.sql" download class="dl-chip">06 · INSERT 197 países</a>
+                  <a href="/bd2/scripts/plsql/07-tabla-equipos.sql" download class="dl-chip">07 · Tabla equipos + INSERT</a>
+                  <a href="/bd2/scripts/plsql/08-pais-mas-equipos.sql" download class="dl-chip">08 · País con más equipos</a>
+                  <a href="/bd2/scripts/plsql/09-sp-actualiza-pais.sql" download class="dl-chip">09 · sp_actualizaPais</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Sesión 02/03/2026 — Cursores</h3>
+              <p>
+                Clase dedicada a cursores explícitos. Se trabajó el patrón OPEN/FETCH/CLOSE,
+                cursores con parámetros y la diferencia entre FOR loop implícito y WHILE loop
+                explícito. El caso práctico fue una nómina simplificada.
+              </p>
+              <div class="exercises-list">
                 <Exercise
-                  title="Paquete con cursor explícito para reporte de empleados"
-                  date="2026-03"
+                  title="Cursor explícito con parámetro — empleados por departamento"
+                  date="02/03/2026"
                   language="plsql"
-                  context="Paquete PL/SQL que encapsula un cursor explícito y un procedimiento de reporte, listando empleados por departamento con su salario y número de trabajos históricos."
-                  code={`CREATE OR REPLACE PACKAGE pkg_reportes AS
-  PROCEDURE reporte_por_departamento(p_dept_id IN NUMBER);
-END pkg_reportes;
-/
+                  context="Cursor que recibe el ID de departamento como parámetro y recorre todos los empleados de ese departamento, imprimiendo cada campo por consola."
+                  code={`DECLARE
+    CURSOR c_empleados(p_departamento NUMBER) IS
+        SELECT *
+        FROM samesa.EMPLOYEES
+        WHERE department_id = p_departamento;
 
-CREATE OR REPLACE PACKAGE BODY pkg_reportes AS
-
-  CURSOR c_empleados(p_dept NUMBER) IS
-    SELECT e.first_name || ' ' || e.last_name AS nombre,
-           e.salary,
-           COUNT(jh.job_id) AS trabajos_anteriores
-    FROM HR.EMPLOYEES e
-    LEFT JOIN HR.JOB_HISTORY jh ON e.employee_id = jh.employee_id
-    WHERE e.department_id = p_dept
-    GROUP BY e.first_name, e.last_name, e.salary;
-
-  PROCEDURE reporte_por_departamento(p_dept_id IN NUMBER) IS
-    v_emp c_empleados%ROWTYPE;
-  BEGIN
-    OPEN c_empleados(p_dept_id);
+    v_empleado samesa.EMPLOYEES%ROWTYPE;
+BEGIN
+    OPEN c_empleados(&departamento);
     LOOP
-      FETCH c_empleados INTO v_emp;
-      EXIT WHEN c_empleados%NOTFOUND;
-      DBMS_OUTPUT.PUT_LINE(v_emp.nombre || ' | ' || v_emp.salary
-        || ' | Historial: ' || v_emp.trabajos_anteriores);
+        FETCH c_empleados INTO v_empleado;
+        EXIT WHEN c_empleados%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(
+            'ID: '     || v_empleado.employee_id  ||
+            ' | Nombre: ' || v_empleado.first_name  || ' ' || v_empleado.last_name ||
+            ' | Salary: ' || v_empleado.salary
+        );
     END LOOP;
     CLOSE c_empleados;
-  END;
+END;
+/`}
+                  reflection="Lo que entendí con este ejercicio: el cursor con parámetro es básicamente una función que devuelve filas. El %NOTFOUND después del FETCH es el EXIT más seguro — si usas COUNT() para el loop te exponés a condiciones de carrera en tablas con alta concurrencia."
+                  scriptUrl="/bd2/scripts/plsql/11-cursor-empleados-depto.sql"
+                />
 
-END pkg_reportes;`}
-                  reflection="Antes de los paquetes declaraba cursores dentro de cada procedimiento. El paquete me forzó a pensar en qué es público (spec) y qué es implementación (body). Es la primera vez que sentí que PL/SQL tiene algo parecido a encapsulación real."
-                  scriptUrl="/bd2/scripts/plsql/pkg_reportes.sql"
+                <Exercise
+                  title="sp_nomina — procedimiento con cursor explícito WHILE"
+                  date="02/03/2026"
+                  language="plsql"
+                  context="Procedimiento que recorre todos los empleados con un cursor explícito WHILE, calcula el descuento del 10% sobre salario + comisión y muestra el total a pagar."
+                  code={`CREATE OR REPLACE PROCEDURE sp_nomina IS
+    CURSOR c_emp IS
+        SELECT employee_id, first_name, last_name,
+               salary, NVL(commission_pct, 0) commission_pct
+        FROM samesa.employees;
+
+    v_nombre   samesa.employees.first_name%TYPE;
+    v_apellido samesa.employees.last_name%TYPE;
+    v_salario  samesa.employees.salary%TYPE;
+    v_comision samesa.employees.commission_pct%TYPE;
+    v_descuento NUMBER;
+    v_total     NUMBER;
+BEGIN
+    OPEN c_emp;
+    FETCH c_emp INTO v_id, v_nombre, v_apellido, v_salario, v_comision;
+
+    WHILE c_emp%FOUND LOOP
+        v_descuento := (v_salario + v_comision) * 0.10;
+        v_total     := (v_salario + v_comision) - v_descuento;
+
+        DBMS_OUTPUT.PUT_LINE('Empleado: ' || v_nombre || ' ' || v_apellido);
+        DBMS_OUTPUT.PUT_LINE('Total a pagar: ' || v_total);
+        DBMS_OUTPUT.PUT_LINE('-----------------------------');
+
+        FETCH c_emp INTO v_id, v_nombre, v_apellido, v_salario, v_comision;
+    END LOOP;
+    CLOSE c_emp;
+END;
+/`}
+                  reflection="El patrón FETCH antes del loop y FETCH al final del loop fue confuso al principio. Es necesario porque WHILE evalúa %FOUND antes de ejecutar el cuerpo, así que el primer FETCH tiene que ser externo. Después usé FOR loop implícito y es mucho más limpio, pero entender el WHILE me hizo comprender qué está pasando por debajo."
+                  scriptUrl="/bd2/scripts/plsql/12-sp-nomina-while.sql"
+                />
+              </div>
+              <div class="session-downloads">
+                <p class="downloads-label">Todos los scripts de esta sesión:</p>
+                <div class="downloads-row">
+                  <a href="/bd2/scripts/plsql/10-sp-nomina-for-loop.sql" download class="dl-chip">10 · sp_nomina FOR loop</a>
+                  <a href="/bd2/scripts/plsql/11-cursor-empleados-depto.sql" download class="dl-chip">11 · Cursor con parámetro</a>
+                  <a href="/bd2/scripts/plsql/12-sp-nomina-while.sql" download class="dl-chip">12 · sp_nomina WHILE</a>
+                  <a href="/bd2/scripts/plsql/13-cursor-nomina.sql" download class="dl-chip">13 · Variante cursor nómina</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-container">
+              <h3>Taller nómina — Sistema completo de liquidación</h3>
+              <div class="exercises-list">
+                <Exercise
+                  title="PKG_NOMINA — paquete con funciones, procedimientos y compound trigger"
+                  date="2026-03"
+                  language="plsql"
+                  context="Sistema de liquidación quincenal completo: tipos objeto, bloque anónimo de liquidación individual, funciones encadenadas (fn_salario_base_q, fn_recargos, fn_bonificacion, fn_bruto), procedimiento sp_liquidar_empleado con excepciones, Package PKG_NOMINA con overloading (individual y masivo con FORALL), función pipelined con SQL dinámico, y compound trigger sobre LIQUIDACION."
+                  code={`-- Especificación del paquete PKG_NOMINA (extracto)
+CREATE OR REPLACE PACKAGE PKG_NOMINA AS
+
+  gc_smlmv NUMBER;
+
+  TYPE t_concepto_liq IS RECORD (
+    id_empleado    LIQUIDACION.id_empleado%TYPE,
+    id_quincena    LIQUIDACION.id_quincena%TYPE,
+    salario_base_q LIQUIDACION.salario_base_q%TYPE,
+    recargos       LIQUIDACION.recargos%TYPE,
+    bonificacion   LIQUIDACION.bonificacion%TYPE,
+    bruto          LIQUIDACION.bruto%TYPE,
+    total_deducciones LIQUIDACION.total_deducciones%TYPE,
+    neto           LIQUIDACION.neto%TYPE
+    -- ... más campos
+  );
+
+  TYPE t_lista_liq IS TABLE OF t_concepto_liq INDEX BY PLS_INTEGER;
+
+  -- Overload: liquidar uno o liquidar toda la quincena
+  PROCEDURE sp_liquidar_quincena(p_id_empleado NUMBER, p_id_quincena VARCHAR2);
+  PROCEDURE sp_liquidar_quincena(p_id_quincena VARCHAR2);
+
+  FUNCTION fn_total_nomina_sede(p_cod_sede VARCHAR2, p_id_quincena VARCHAR2)
+    RETURN NUMBER;
+
+  FUNCTION fn_reporte_nomina(
+    p_cod_sede      VARCHAR2 DEFAULT NULL,
+    p_tipo_contrato VARCHAR2 DEFAULT NULL
+  ) RETURN t_liq_tab PIPELINED;
+
+END PKG_NOMINA;
+/`}
+                  reflection="Este taller fue el salto más grande del semestre. El overloading del procedimiento (mismo nombre, distintos parámetros) fue la primera vez que PL/SQL me pareció orientado a objetos. FORALL con SAVE EXCEPTIONS fue lo más difícil: la variable SQL%BULK_EXCEPTIONS no es un array normal y el manejo del índice dentro del bloque de excepción me costó entenderlo. El compound trigger resolvió el problema de la tabla mutante que habría dado un error con un trigger simple."
+                  scriptUrl="/bd2/scripts/plsql/14-taller-nomina-completo.sql"
                 />
               </div>
             </section>
@@ -160,10 +274,10 @@ END pkg_reportes;`}
               <h3>Reflexión sobre el Test escrito 1</h3>
               <div class="reflection-block">
                 <p>
-                  El Test 1 no fue bien — obtuve 0.2/5. Lo que me hizo daño fue la lectura de
-                  código con errores sutiles bajo presión de tiempo: un COMMIT dentro de un
-                  trigger, un cursor que no cerraba, una excepción que atrapaba demasiado con
-                  WHEN OTHERS sin re-lanzar.
+                  El Test 1 no fue bien — obtuve 0.2/5. Lo que me hizo daño fue la lectura
+                  de código con errores sutiles bajo presión de tiempo: un COMMIT dentro de
+                  un trigger, un cursor que no cerraba, una excepción que atrapaba demasiado
+                  con WHEN OTHERS sin re-lanzar.
                 </p>
                 <p>
                   Después del test repasé cada uno de esos patrones con ejercicios propios.
@@ -194,9 +308,7 @@ END pkg_reportes;`}
   }
 
   @media (max-width: 600px) {
-    .scores-grid {
-      grid-template-columns: 1fr;
-    }
+    .scores-grid { grid-template-columns: 1fr; }
   }
 
   .score-card {
@@ -234,6 +346,54 @@ END pkg_reportes;`}
     margin: 0;
   }
 
+  .session-downloads {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+  }
+
+  .downloads-label {
+    color: #666;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+  }
+
+  .downloads-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dl-chip {
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.06);
+    border: 1px solid rgba(126, 197, 255, 0.18);
+    border-radius: 6px;
+    padding: 5px 10px;
+    text-decoration: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    transition: background-color 0.1s;
+  }
+
+  .dl-chip:hover {
+    background-color: rgba(126, 197, 255, 0.12);
+  }
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #7ec5ff;
+    background-color: rgba(126, 197, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
   .reflection-block {
     background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid #2e2e2e;
@@ -248,7 +408,5 @@ END pkg_reportes;`}
     line-height: 22px;
   }
 
-  .reflection-block p:last-child {
-    margin-bottom: 0;
-  }
+  .reflection-block p:last-child { margin-bottom: 0; }
 </style>
